@@ -22,9 +22,28 @@ def getSession() -> requests.session:
     return session
 
 
-s = getSession()
+if __name__ == "__main__":
+    s = getSession()
 
-resultsCalender = s.get("https://opstra.definedge.com/api/resultscalendar").json()
-pd.DataFrame.from_records(resultsCalender).to_csv(
-    "HistoricalResultCalender.csv", index=False
-)
+    resultsCalender = s.get("https://opstra.definedge.com/api/resultscalendar").json()
+
+    pd.DataFrame.from_records(resultsCalender).to_csv(
+        "HistoricalResultCalender.csv", index=False
+    )
+
+    s.headers.update(
+        {"referer": "https://opstra.definedge.com/historical-results-timings"}
+    )
+
+    tickers = s.get("https://opstra.definedge.com/api/tickers").json()
+
+    for ticker in tickers[3:]:
+        print(ticker)
+        if ticker != "SHRIRAMFIN":
+            df = pd.DataFrame.from_records(
+                s.get(
+                    f"https://opstra.definedge.com/api/resultscalendar/{ticker}"
+                ).json()
+            )
+            df.drop(columns="Symbol", inplace=True)
+            df.to_csv(f"{ticker}-HistoricalResultCalender.csv", index=False)
